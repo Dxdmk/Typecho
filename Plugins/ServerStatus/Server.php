@@ -89,22 +89,13 @@ include 'menu.php';
                     <?php ServerStatus_Plugin::form()->render(); ?>
                 </div>
         </div>
-		<br />
-		<div class="row typecho-page-main manage-metas" id="row_Check" style="display:none;">
-		    <div class="col-mb-12">
-			    <div class="typecho-table-wrap" id="table_Check">
-					<code id="data_Check" style="padding: 2px 4px; font-size: 90%; color: #c7254e; background-color: #f9f2f4; border-radius: 4px;">检测中...（未显示结果前请不要多次点击检测按钮，谢谢）</code>
-					<br />
-					<button class="btn btn-info" onclick="$('#row_Check').hide();">清空</button>
-				</div>
-			</div>
-		</div>
     </div>
 </div>
 <?php
 include 'copyright.php';
 include 'common-js.php';
 ?>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@8"></script>
 <script type="text/javascript">
 window.jQuery || document.write("<script src=\"https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js\"><\/script>");
 
@@ -154,17 +145,16 @@ window.jQuery || document.write("<script src=\"https://cdn.jsdelivr.net/npm/jque
     });
 })();
 function Check(id){
-    $('#row_Check').show();
-	$('#table_Check').html('<code id="data_Check" style="padding: 2px 4px; font-size: 90%; color: #c7254e; background-color: #f9f2f4; border-radius: 4px;">检测中...（未显示结果前请不要多次点击检测按钮，谢谢）</code><br /><button class="btn btn-info" onclick="$(\'#row_Check\').hide();">清空</button>');
-    $.getJSON("/ServerStatus/Check?type=html&id="+id,function(result){
-		var html = "";
+	Swal.fire({allowOutsideClick:false,imageUrl:'https://ae01.alicdn.com/kf/U05ed7e65d7a749a29bd6164f9d4abe84w.gif',title:"与服务器通讯中...",showConfirmButton:false,timer:0});
+    $.getJSON("/ServerStatus/Check?id="+id,function(result){
+		swal.close();
         if (result.code == 200) {
-			html += "服务器ID："+id+"<br />状态码：200<br />返回消息："+result.msg;
+			result.text = "服务器ID："+id+"<br />状态码：200<br />"+result.msg;
+			Swal.fire({allowOutsideClick:false,icon:'success',type:'success',title:"成功",html:result.text,showConfirmButton:true,timer:0});
         }else{
-			html += "服务器ID："+id+"<br />状态码：false<br />返回消息："+result.msg;
+			result.text = "服务器ID："+id+"<br />状态码：false<br />"+result.msg;
+			Swal.fire({allowOutsideClick:false,icon:'error',type:'error',title:"失败",html:result.text,showConfirmButton:true,timer:0});
         }
-		$('#data_Check').html(html);
-		$('#table_Check').append('<a class="btn btn-success" href="/admin/extending.php?panel=ServerStatus%2FServer.php&id='+id+'">编辑</a>');
     });
 }
 </script>

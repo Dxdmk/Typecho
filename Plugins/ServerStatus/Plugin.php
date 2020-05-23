@@ -4,8 +4,8 @@
  * 
  * @package ServerStatus
  * @author <strong style="color:#B0E2FF;font-family: 楷体;">Weifeng</strong>
- * @version <strong style="color:#B0E2FF;font-family: 楷体;">1.0</strong>
- * @update: 2020-04-06
+ * @version <strong style="color:#B0E2FF;font-family: 楷体;">2.0</strong>
+ * @update: 2020-05-23
  * @link https://wfblog.net/
  */
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
@@ -29,10 +29,11 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
         if(!self::testwrite($logDir)){
             throw new Typecho_Plugin_Exception('log目录没有写入的权限');
         }
-		if(!is_dir($themeDir.'/handsome')){
-            throw new Typecho_Plugin_Exception('handsome模板不存在，其他模板请自行制作样式并将独立页面上传！');
-		}else{
-			if(!copy($otherDir.'/status.php',$themeDir.'/handsome/status.php')){
+		if(is_dir($themeDir.'/handsome')){
+			if(!copy($otherDir.'/server.php',$themeDir.'/handsome/server.php')){
+				throw new Typecho_Plugin_Exception('插件权限不足，请给予足够的权限！');
+			}
+			if(!copy($otherDir.'/website.php',$themeDir.'/handsome/website.php')){
 				throw new Typecho_Plugin_Exception('插件权限不足，请给予足够的权限！');
 			}
 		}
@@ -49,6 +50,7 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
         Helper::addRoute('ServerStatus_Check', '/ServerStatus/Check', 'ServerStatus_Action', 'Check');
         Helper::addRoute('ServerStatus_IPInfo', '/ServerStatus/IPInfo', 'ServerStatus_Action', 'IPInfo');
         Helper::addRoute('ServerStatus_Status', '/ServerStatus/Status', 'ServerStatus_Action', 'Status');
+        Helper::addRoute('ServerStatus_Iframe', '/ServerStatus/Iframe', 'ServerStatus_Action', 'Iframe');
         Helper::addRoute('ServerStatus_Getfile', '/ServerStatus/Getfile', 'ServerStatus_Action', 'Getfile');
 		return _t($msg);
     }
@@ -65,10 +67,11 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
 	{
 		$otherDir = __TYPECHO_ROOT_DIR__ . __TYPECHO_PLUGIN_DIR__ . '/ServerStatus/other';
 		$themeDir = __TYPECHO_ROOT_DIR__ . __TYPECHO_THEME_DIR__;
-		if(!is_dir($themeDir.'/handsome')){
-            throw new Typecho_Plugin_Exception('handsome模板不存在，其他模板请自行删除独立页面！');
-		}else{
-			if(!unlink($themeDir.'/handsome/status.php')){
+		if(is_dir($themeDir.'/handsome')){
+			if(!unlink($themeDir.'/handsome/server.php')){
+				throw new Typecho_Plugin_Exception('插件权限不足，请给予足够的权限！');
+			}
+			if(!unlink($themeDir.'/handsome/website.php')){
 				throw new Typecho_Plugin_Exception('插件权限不足，请给予足够的权限！');
 			}
 		}
@@ -114,11 +117,14 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
                 'IP.SB' => '<a href="https://ip.sb/">IP.SB</a>--Json',
                 'IP-API' => '<a href="https://ip-api.com/">IP-API</a>--Json',
                 'PConline' => '<a href="https://www.pconline.com.cn/">PConline</a>--Json',
+                'IW3C' => '<a href="https://www.iw3c.com.cn/">IW3C</a>--Json',
                 'SOHU' => '<a href="https://pv.sohu.com/cityjson?ie=utf-8">SOHU</a>--Js',
-            ), 'IP.SB', '获取IP信息API', '默认为IP.SB，四个API各有优劣（IP.SB支持IPV6但国内通讯速度较慢，IP-API信息全但国内通讯速度较慢，PConline获取速度快但国外信息不全，SOHU是JS不需要通过服务器获取但信息不全）');
+            ), 'IP.SB', '获取IP信息API', '默认为IP.SB，四个API各有优劣（IP.SB支持IPV6但国内通讯速度较慢，IP-API信息全但国内通讯速度较慢，PConline获取速度快但国外信息不全，IW3C速度快但是是小厂，SOHU是JS不需要通过服务器获取但信息不全）');
+        $UptimeKey = new Typecho_Widget_Helper_Form_Element_Text('UptimeKey', NULL, NULL, 'UptimeRobot Key', '目前仅支持Main API Key一种类型');
         $form->addInput($Toastr);
         $form->addInput($SweetAlert);
         $form->addInput($IPApi);
+		$form->addInput($UptimeKey);
     }
 
     /**
@@ -181,12 +187,17 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
     public static function header()
     {
         $options = Typecho_Widget::widget('Widget_Options');
+        echo "\n";
+        echo '<!-- ServerStatus Plugin Of Typecho -->';
+        echo "\n";
 		if($options->plugin('ServerStatus')->Toastr != 1){
 			echo "<link href=\"https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css\" rel=\"stylesheet\">\n";
 		}
         if($options->plugin('ServerStatus')->SweetAlert != 1){
 			echo "";
 		}
+        echo '<!-- ServerStatus Plugin Of Typecho -->';
+        echo "\n";
     }
     
     /**
@@ -195,6 +206,9 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
      */
     public static function footer(){
         $options = Typecho_Widget::widget('Widget_Options');
+        echo "\n";
+        echo '<!-- ServerStatus Plugin Of Typecho -->';
+        echo "\n";
 		if($options->plugin('ServerStatus')->Toastr != 1){
 			echo "<script src=\"https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js\"></script>\n";
 		}
@@ -204,9 +218,24 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
 		if($options->plugin('ServerStatus')->IPApi == 'SOHU'){
 			echo "<script src=\"https://pv.sohu.com/cityjson?ie=utf-8\"></script>\n";
 		}
+		if(!empty($options->plugin('ServerStatus')->UptimeKey) && !empty($options->plugin('ServerStatus')->RefreshTime)){
+			echo "<script src=\"https://cdn.jsdelivr.net/npm/mustache@4.0.1/mustache.min.js\"></script>\n";
+			echo "<script src=\"https://cdn.jsdelivr.net/gh/acewfdy/static/System/typecho/plugin/ServerStatus/js/cup_bak.js\"></script>\n";
+			echo <<<EOF
+  <script type="text/javascript">
+  // array of Monitor-specific API keys or Main API key to list all monitors
+  var __apiKeys = [
+	'{$options->plugin('ServerStatus')->UptimeKey}', //Auth E
+  ];
+  </script>
+EOF;
+            echo "\n";
+		}
 		// 插入控制台标识
-        echo '<!-- ServerStatus Plugin Of Typecho -->';
     	echo '<script>console.log("\n %c ServerStatus Plugin Of Typecho By Weifeng ","color:#fff; background: linear-gradient(to right , #7A88FF, #d27aff); padding:5px; border-radius: 10px;");console.log("\n %c 插件：https://wfblog.net/archives/serverstatus_plugin.html","color:#fff; background: linear-gradient(to right , #7A88FF, #d27aff); padding:5px; border-radius: 10px;"); </script>';
+        echo "\n";
+        echo '<!-- ServerStatus Plugin Of Typecho -->';
+        echo "\n";
     }
 
     /**

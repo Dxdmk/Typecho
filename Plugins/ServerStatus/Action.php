@@ -13,8 +13,6 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
         header('Content-type: application/json');
 		if(empty($id)){
 			$id = $_GET['id'];
-		}else{
-		    $id = $id;
 		}
 		$db = Typecho_Db::get();
 		$prefix = $db->getPrefix();
@@ -29,11 +27,13 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 		$nowTime = strtotime("now");
 		$updateTime = strtotime(date("Y-m-d H:i:s",$log_arr[1])."+{$server['ajax']}second");
 		if($nowTime >= $updateTime || !is_array($log_arr) || empty($log_arr[0])){
-			if($server['type'] == 'default'){
+			if($server['type'] == 'default' || $server['type'] == 'winbt'){
 				$data = $this->getContent($server['url'].'?key='.$server['key'].'&action=fetch',null);
 				echo $data;
 				file_put_contents($this->plugin_dir.'log/'.$server['sign'].'.log',$data.'|'.$nowTime);
 			}elseif($server['type'] == 'linuxbt'){
+				$url_parse = parse_url($server['url']);
+                $server['url'] = $url_parse['scheme'].'://'.$url_parse['host'].':'.$url_parse['port'];
 				$bt_system = $this->bt_system($server['url'],$server['key']);
         	    $bt_network = $this->bt_network($server['url'],$server['key']);
 				$bt_disk = $bt_network['disk'][0]['size'];
@@ -108,6 +108,7 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 
 	public function IPInfo()
 	{
+		error_reporting(E_ALL^E_NOTICE);
 		header("Access-Control-Allow-Origin:*");
         header('Content-type: application/json');
 		$ip = $this->getIp();
@@ -117,7 +118,6 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 		    	"msg" => "获取IP信息成功",
 				"ip" => $ip,
 				"data" => array(
-			    	"organization" => "Yourself",
 					"isp" => "Yourself",
 					"country" => "该IP为内网IP",
 					"region" => "",
@@ -142,7 +142,7 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 		$log_list = explode(PHP_EOL,$log);
 		foreach($log_list as $k => $v){
 			$v_arr = json_decode($v,true);
-			if(count($v_arr) != 0 && in_array($ip,$v_arr)){
+			if(!empty($v) && count($v_arr) != 0 && in_array($ip,$v_arr)){
 				if($v_arr['date'] == date("Y-m-d")){
 					$v_arr['os'] = $this->get_os();
 					$v_arr['browse'] = $this->get_browse();
@@ -182,6 +182,10 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 				$get->setHeader('Referer','https://whois.pconline.com.cn/');
 				$get->setHeader('Accept-Language','zh-CN,zh;q=0.9');
 				$local = json_decode($this->strToUtf8(trim(file_get_contents('https://whois.pconline.com.cn/ipJson.jsp?json=true'))),true);
+				break;
+			case 'IW3C':
+			    $url = 'https://v2.api.iw3c.top/?api=ip&ip='.$ip;
+				$get->setHeader('Referer','https://www.iw3c.com.cn/');
 				break;
 			default:
 			    break;
@@ -230,6 +234,19 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 				$info['isp'] = end($info['isp']);
 			}
 			$save_file = true;
+		}elseif($IPApi == 'IW3C'){
+			$info['code'] = (isset($output['status']) && ($output['status'] == 'fail' || $output['status'] == 'error'))?false:200;
+			$info['ip'] = $output['data']['ip'];
+			$info['country'] = $output['data']['country'];
+			if(!isset($output['data']['region']) || !isset($output['data']['city'])){
+			    $info['region'] = '';
+    		    $info['city'] = '';
+		    }else{
+			    $info['region'] = $output['data']['region'];
+    		    $info['city'] = $output['data']['city'];
+			}
+			$info['isp'] = $output['data']['isp'];
+			$save_file = true;
 		}else{
 			$info['code'] = 200;
 		}
@@ -259,6 +276,7 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 
     public function Check()
 	{
+		error_reporting(E_ALL^E_NOTICE);
 		header("Access-Control-Allow-Origin:*");
         header('Content-type: application/json');
 		$id = $_GET['id'];
@@ -270,33 +288,29 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 		$db = Typecho_Db::get();
 		$prefix = $db->getPrefix();
 		$server = $db->fetchRow($db->select()->from($prefix.'ServerStatus_server')->where('id = ?', $id)->limit(1));
-		if($server['type'] == 'default'){
+		if($server['type'] == 'default' || $server['type'] == 'winbt'){
 			$data = $this->getContent($server['url'].'?key='.$server['key'].'&action=fetch',null);
 			$data_arr = json_decode($data,true);
 			if(empty($data)){
-				$msg = array('code' => false,'msg' => '服务器通讯失败，可能是地址和密匙校验错误');
-				if($type == 'text'){
-					$msg['msg'] .= "\n服务器返回：无";
-				}else{
-					$msg['msg'] .= "<br />服务器返回：无";
-				}
+				$msg = array('code' => false,'msg' => '服务器通讯失败，可能是地址和密匙校验错误<br />服务器返回：无');
 			}elseif(!isset($data_arr['serverStatus']['memRealUsage']['max']) || empty($data_arr['serverStatus']['memRealUsage']['max'])){
-			    $msg = array('code' => false,'msg' => '服务器通讯失败，可能是权限不足引起的失败');
-				if($type == 'text'){
-					$msg['msg'] .= "\n服务器返回：{$data}";
-				}else{
-					$msg['msg'] .= "<br />服务器返回：{$data}";
-				}
+			    $msg = array('code' => false,'msg' => '服务器通讯失败，可能是权限不足引起的失败<br />服务器返回：'.$data);
 		    }else{
 			    $msg = array('code' => 200,'msg' => '服务器通讯成功');
 		    };
 		}elseif($server['type'] == 'linuxbt'){
+			$url_parse = parse_url($server['url']);
+            $server['url'] = $url_parse['scheme'].'://'.$url_parse['host'].':'.$url_parse['port'];
 			$data = $this->bt_system($server['url'],$server['key']);
-			if(isset($data['status']) && $data['status'] == false){
-			    $msg = array('code' => false,'msg' => $data['msg']);
-		    }else{
-			    $msg = array('code' => 200,'msg' => '服务器通讯成功');
-		    };
+			if(empty($data)){
+				$msg = array('code' => false,'msg' => '服务器通讯失败，可能是地址输入错误<br />服务器返回：无');
+			}else{
+				if(isset($data['status']) && $data['status'] == false){
+				    $msg = array('code' => false,'msg' => $data['msg']);
+		    	}else{
+				    $msg = array('code' => 200,'msg' => '服务器通讯成功');
+		    	};
+			}
 		}
 		echo json_encode($msg,JSON_UNESCAPED_UNICODE);
 	}
@@ -349,6 +363,21 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 		}
 		unlink($file);
 	    unlink($cache_path);
+	}
+
+    public function Iframe()
+	{
+		$id = $_GET['id'];
+		$db = Typecho_Db::get();
+		$prefix = $db->getPrefix();
+		$sql = $db->select()->from($prefix.'ServerStatus_server');
+		if(empty($id)){
+		    $sql = $sql->order($prefix.'ServerStatus_server.id', Typecho_Db::SORT_ASC);
+			$servers = $db->fetchAll($sql);
+			include_once($this->plugin_dir."other/theme_index.php");
+		}else{
+			include_once($this->plugin_dir."other/theme_status.php");
+		}
 	}
 
     function getContent($url,$header){
@@ -693,7 +722,7 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 		}
 		return array('title' => $title, 'icon' => $icon);
 	}
-	public static function get_oss($ua){
+	function get_oss($ua){
 		$title = '非主流操作系统';
 		$icon = 'iconfontua icon-search';
 		if (preg_match('/win/i', $ua)) {
@@ -773,7 +802,7 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 		}	
 		return array('title' => $title, 'icon' => $icon);
 	}
-	public function strToUtf8($str){
+	function strToUtf8($str){
         $encode = mb_detect_encoding($str, array("ASCII",'UTF-8',"GB2312","GBK",'BIG5'));
         if($encode == 'UTF-8'){
             return $str;

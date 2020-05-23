@@ -5,9 +5,11 @@ if(get_url() != '{ServerStatus_url}' || $_GET['key'] != '{ServerStatus_key}'){
 }
 function get_url(){
 	if((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')){
-		return 'https'.'://'.$_SERVER['HTTP_HOST'].'/'.substr($_SERVER['PHP_SELF'],strrpos($_SERVER['PHP_SELF'],'/')+1);
+		//return 'https'.'://'.$_SERVER['HTTP_HOST'].'/'.substr($_SERVER['PHP_SELF'],strrpos($_SERVER['PHP_SELF'],'/')+1);
+		return 'https'.'://'.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'];
 	}else{
-		return 'http'.'://'.$_SERVER['HTTP_HOST'].'/'.substr($_SERVER['PHP_SELF'],strrpos($_SERVER['PHP_SELF'],'/')+1);
+		//return 'http'.'://'.$_SERVER['HTTP_HOST'].'/'.substr($_SERVER['PHP_SELF'],strrpos($_SERVER['PHP_SELF'],'/')+1);
+		return 'http'.'://'.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'];
 	}
 }
 
