@@ -218,11 +218,10 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
 		if($options->plugin('ServerStatus')->IPApi == 'SOHU'){
 			echo "<script src=\"https://pv.sohu.com/cityjson?ie=utf-8\"></script>\n";
 		}
-		if(!empty($options->plugin('ServerStatus')->UptimeKey) && !empty($options->plugin('ServerStatus')->RefreshTime)){
-			echo "<script src=\"https://cdn.jsdelivr.net/npm/mustache@4.0.1/mustache.min.js\"></script>\n";
-			echo "<script src=\"https://cdn.jsdelivr.net/gh/acewfdy/static/System/typecho/plugin/ServerStatus/js/cup_bak.js\"></script>\n";
+		if(!empty($options->plugin('ServerStatus')->UptimeKey)){
 			echo <<<EOF
   <script type="text/javascript">
+  var WebsiteStatus = null;
   // array of Monitor-specific API keys or Main API key to list all monitors
   var __apiKeys = [
 	'{$options->plugin('ServerStatus')->UptimeKey}', //Auth E
@@ -230,6 +229,8 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
   </script>
 EOF;
             echo "\n";
+			echo "<script src=\"https://cdn.jsdelivr.net/npm/mustache@4.0.1/mustache.min.js\"></script>\n";
+			echo "<script src=\"https://cdn.jsdelivr.net/gh/acewfdy/static/System/typecho/plugin/ServerStatus/js/cup_bak.js\"></script>\n";
 		}
 		// 插入控制台标识
     	echo '<script>console.log("\n %c ServerStatus Plugin Of Typecho By Weifeng ","color:#fff; background: linear-gradient(to right , #7A88FF, #d27aff); padding:5px; border-radius: 10px;");console.log("\n %c 插件：https://wfblog.net/archives/serverstatus_plugin.html","color:#fff; background: linear-gradient(to right , #7A88FF, #d27aff); padding:5px; border-radius: 10px;"); </script>';
