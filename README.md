@@ -17,7 +17,7 @@ Typecho的一些插件和模板
 
 ## ServerStatus
 文件：/Plugins/ServerStatus  
-版本：1.0.0  
-更新：第一个版本出生了  
+版本：2.0.0  
+更新：重大更新，详见博客  
 用途：为博客添加一个服务器状态页  
 详情：https://wfblog.net/archives/serverstatus_plugin.html  
