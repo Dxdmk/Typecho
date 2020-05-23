@@ -4,7 +4,7 @@
  * 
  * @package ServerStatus
  * @author <strong style="color:#B0E2FF;font-family: 楷体;">Weifeng</strong>
- * @version <strong style="color:#B0E2FF;font-family: 楷体;">2.0</strong>
+ * @version <strong style="color:#B0E2FF;font-family: 楷体;">2.0.0</strong>
  * @update: 2020-05-23
  * @link https://wfblog.net/
  */
