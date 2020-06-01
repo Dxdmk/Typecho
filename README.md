@@ -21,3 +21,10 @@ Typecho的一些插件和模板
 更新：重大更新，详见博客  
 用途：为博客添加一个服务器状态页  
 详情：https://wfblog.net/archives/serverstatus_plugin.html  
+
+## HandsomeNotice
+文件：/Plugins/HandsomeNotice  
+版本：1.0.0  
+更新：修改为handsome自带的弹窗  
+用途：专属于Handsome主题的消息提示插件  
+详情：https://wfblog.net/  
