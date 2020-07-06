@@ -16,7 +16,7 @@
     <div class="row">
       <div class="col-lg-10 col-lg-offset-1">
           <div class="panel panel-info">
-            <div class="panel-heading">服务器[<?php echo json_decode(ServerStatus_Plugin::info($_GET['id']),true)['name']; ?>]的状态</div>
+            <div class="panel-heading">服务器[<?php echo ServerStatus_Plugin::info($_GET['id'])['name']; ?>]的状态</div>
 		    <div class="panel-body">
               <div class="">
 	            <div class="">
@@ -117,7 +117,7 @@
 	            </div>
 	          </div>
 	        </div>
-			<div class="panel-footer text-center"><a class="btn btn-success" href="/ServerStatus/Iframe">返回列表</a></div>
+			<div class="panel-footer text-center"><a class="btn btn-success" href="/ServerStatus/Server">返回列表</a></div>
 	      </div>
 	    </div>
     <script type="text/javascript">
@@ -138,7 +138,7 @@
     				if(data != null ){
     					swal.close();
 						StatusLoader();
-    					Loading = setInterval(StatusLoader,<?php echo json_decode(ServerStatus_Plugin::info($_GET['id']),true)['ajax']; ?>*1000);
+    					Loading = setInterval(StatusLoader,<?php echo ServerStatus_Plugin::info($_GET['id'])['ajax']; ?>*1000);
     				}else{
     					swal.close();
     					Swal.fire({allowOutsideClick:false,icon:'error',type:'error',title:"通讯失败，请重试！",showConfirmButton:true,timer:0});

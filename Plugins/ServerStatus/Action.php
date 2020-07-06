@@ -48,8 +48,8 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 						),
 						"serverUtcTime" => gmdate("Y/m/d H:i:s"),
 						"diskUsage" => array(
-						    "value" => str_replace('G','',$bt_disk[1])*1024*1024,
-							"max" => str_replace('G','',$bt_disk[0])*1024*1024
+						    "value" => str_replace('G','',$bt_disk[1])*1024*1024*1024,
+							"max" => str_replace('G','',$bt_disk[0])*1024*1024*1024
 			            )
 	    	        ),
 					"serverStatus" => array(
@@ -365,19 +365,31 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 	    unlink($cache_path);
 	}
 
-    public function Iframe()
+    public function ServerIframe()
 	{
 		$id = $_GET['id'];
 		$db = Typecho_Db::get();
 		$prefix = $db->getPrefix();
 		$sql = $db->select()->from($prefix.'ServerStatus_server');
-		if(empty($id)){
+		if(empty($id) && ServerStatus_Plugin::GetCount() > 1){
 		    $sql = $sql->order($prefix.'ServerStatus_server.id', Typecho_Db::SORT_ASC);
 			$servers = $db->fetchAll($sql);
 			include_once($this->plugin_dir."other/theme_index.php");
 		}else{
-			include_once($this->plugin_dir."other/theme_status.php");
+			if(empty($id)){
+				$id = ServerStatus_Plugin::info()['id'];
+			}
+			include_once($this->plugin_dir."other/theme_server.php");
 		}
+	}
+
+    public function WebsiteIframe()
+	{
+		$options = Typecho_Widget::widget('Widget_Options');
+		$UptimeKey = $options->plugin('ServerStatus')->UptimeKey;
+		$UptimeLink = $options->plugin('ServerStatus')->UptimeLink;
+		$UptimeDay = $options->plugin('ServerStatus')->UptimeDay;
+		include_once($this->plugin_dir."other/theme_website.php");
 	}
 
     function getContent($url,$header){
@@ -415,6 +427,7 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 		}
 		/** 取出数据 */
 		$server = $this->request->from('name', 'sign', 'type', 'url', 'key', 'ajax', 'desc');
+		$server['order'] = $this->db->fetchObject($this->db->select(array('MAX(order)' => 'maxOrder'))->from($this->prefix.'ServerStatus_server'))->maxOrder + 1;
 
 		/** 插入数据 */
 		$server['id'] = $this->db->query($this->db->insert($this->prefix.'ServerStatus_server')->rows($server));
@@ -472,12 +485,12 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
         $this->response->redirect(Typecho_Common::url('extending.php?panel=ServerStatus%2FServer.php', $this->options->adminUrl));
     }
 
-    public function typeServer()
+    public function sortServer()
     {
         $servers = $this->request->filter('int')->getArray('id');
         if ($servers && is_array($servers)) {
-			foreach ($servers as $type => $id) {
-				$this->db->query($this->db->update($this->prefix.'ServerStatus_server')->rows(array('id' => $type + 1))->where('id = ?', $id));
+			foreach ($servers as $sort => $id) {
+				$this->db->query($this->db->update($this->prefix.'ServerStatus_server')->rows(array('order' => $sort + 1))->where('id = ?', $id));
 			}
         }
     }
@@ -492,7 +505,7 @@ class ServerStatus_Action extends Typecho_Widget implements Widget_Interface_Do
 		$this->on($this->request->is('do=insert'))->insertServer();
 		$this->on($this->request->is('do=update'))->updateServer();
 		$this->on($this->request->is('do=delete'))->deleteServer();
-		$this->on($this->request->is('do=type'))->typeServer();
+		$this->on($this->request->is('do=sort'))->sortServer();
 		$this->response->redirect($this->options->adminUrl);
 	}
 

@@ -50,8 +50,9 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
         Helper::addRoute('ServerStatus_Check', '/ServerStatus/Check', 'ServerStatus_Action', 'Check');
         Helper::addRoute('ServerStatus_IPInfo', '/ServerStatus/IPInfo', 'ServerStatus_Action', 'IPInfo');
         Helper::addRoute('ServerStatus_Status', '/ServerStatus/Status', 'ServerStatus_Action', 'Status');
-        Helper::addRoute('ServerStatus_Iframe', '/ServerStatus/Iframe', 'ServerStatus_Action', 'Iframe');
         Helper::addRoute('ServerStatus_Getfile', '/ServerStatus/Getfile', 'ServerStatus_Action', 'Getfile');
+        Helper::addRoute('ServerStatus_Server', '/ServerStatus/Server', 'ServerStatus_Action', 'ServerIframe');
+        Helper::addRoute('ServerStatus_Website', '/ServerStatus/Website', 'ServerStatus_Action', 'WebsiteIframe');
 		return _t($msg);
     }
     
@@ -78,6 +79,8 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
         Helper::removeRoute("ServerStatus_Check");
         Helper::removeRoute("ServerStatus_IPInfo");
         Helper::removeRoute("ServerStatus_Status");
+        Helper::removeRoute("ServerStatus_Server");
+        Helper::removeRoute("ServerStatus_Website");
         Helper::removeRoute("ServerStatus_Getfile");
 		Helper::removeAction('ServerStatus_Manage');
 		Helper::removePanel(1, 'ServerStatus/Server.php');
@@ -106,12 +109,12 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
             'Toastr', array(
                 '0' => '未引入',
                 '1' => '已引入',
-            ), '0', '是否已经引入Toastr组件', '如果已经引入，请选择后者，不然会报错哦~');
+            ), '0', 'Toastr', '是否已经引入Toastr组件，如果已经引入，请选择后者，不然会报错哦~');
         $SweetAlert = new Typecho_Widget_Helper_Form_Element_Radio(
             'SweetAlert', array(
                 '0' => '未引入',
                 '1' => '已引入',
-            ), '0', '是否已经引入SweetAlert组件', '如果已经引入，请选择后者，不然会报错哦~');
+            ), '0', 'SweetAlert', '是否已经引入SweetAlert组件，如果已经引入，请选择后者，不然会报错哦~');
         $IPApi = new Typecho_Widget_Helper_Form_Element_Select(
             'IPApi', array(
                 'IP.SB' => '<a href="https://ip.sb/">IP.SB</a>--Json',
@@ -119,12 +122,20 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
                 'PConline' => '<a href="https://www.pconline.com.cn/">PConline</a>--Json',
                 'IW3C' => '<a href="https://www.iw3c.com.cn/">IW3C</a>--Json',
                 'SOHU' => '<a href="https://pv.sohu.com/cityjson?ie=utf-8">SOHU</a>--Js',
-            ), 'IP.SB', '获取IP信息API', '默认为IP.SB，四个API各有优劣（IP.SB支持IPV6但国内通讯速度较慢，IP-API信息全但国内通讯速度较慢，PConline获取速度快但国外信息不全，IW3C速度快但是是小厂，SOHU是JS不需要通过服务器获取但信息不全）');
-        $UptimeKey = new Typecho_Widget_Helper_Form_Element_Text('UptimeKey', NULL, NULL, 'UptimeRobot Key', '目前仅支持Main API Key一种类型');
+            ), 'IP.SB', 'IPApi', '获取IP信息的API，默认为IP.SB，四个API各有优劣（IP.SB支持IPV6但国内通讯速度较慢，IP-API信息全但国内通讯速度较慢，PConline获取速度快但国外信息不全，IW3C速度快但是是小厂，SOHU是JS不需要通过服务器获取但信息不全）');
+        $UptimeKey = new Typecho_Widget_Helper_Form_Element_Textarea('UptimeKey', NULL, NULL, 'UptimeRobot Key', '每个Key之间以英文半角逗号隔开');
+        $UptimeLink = new Typecho_Widget_Helper_Form_Element_Radio(
+            'UptimeLink', array(
+                'true' => '是',
+                'false' => '否',
+            ), 'true', 'UptimeRobot Link', '是否展示监控网站的链接');
+		$UptimeDay = new Typecho_Widget_Helper_Form_Element_Text('UptimeDay', NULL, '60', 'UptimeRobot Day', '日志天数。可选范围1~90，默认60天');
         $form->addInput($Toastr);
         $form->addInput($SweetAlert);
         $form->addInput($IPApi);
 		$form->addInput($UptimeKey);
+		$form->addInput($UptimeLink);
+		$form->addInput($UptimeDay);
     }
 
     /**
@@ -187,17 +198,43 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
     public static function header()
     {
         $options = Typecho_Widget::widget('Widget_Options');
-        echo "\n";
-        echo '<!-- ServerStatus Plugin Of Typecho -->';
-        echo "\n";
-		if($options->plugin('ServerStatus')->Toastr != 1){
-			echo "<link href=\"https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css\" rel=\"stylesheet\">\n";
+		if($options->plugin('ServerStatus')->Toastr != 1 || $options->plugin('ServerStatus')->SweetAlert != 1){
+            echo "\n";
+            echo '<!-- ServerStatus Plugin Of Typecho -->';
+            echo "\n";
+		    if($options->plugin('ServerStatus')->Toastr != 1){
+		    	echo "<link href=\"https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css\" rel=\"stylesheet\">\n";
+		    }
+            if($options->plugin('ServerStatus')->SweetAlert != 1){
+		    	echo "";
+		    }
+			if(!empty($options->plugin('ServerStatus')->UptimeKey)){
+				echo <<<EOF
+<script type="text/javascript">
+  var WebsiteStatus = null;
+  // array of Monitor-specific API keys or Main API key to list all monitors
+  var __apiKeys = [
+
+EOF;
+				$data = $options->plugin('ServerStatus')->UptimeKey;
+				$data = explode(',',$data);
+				foreach($data as $value){
+					if($value == end($data)){
+						echo  '    \''.$value.'\'';
+					}else{
+						echo '    \''.$value.'\','.PHP_EOL;
+					}
+				}
+				echo <<<EOF
+
+  ];
+</script>
+EOF;
+				echo "\n";
+			}
+            echo '<!-- ServerStatus Plugin Of Typecho -->';
+            echo "\n";
 		}
-        if($options->plugin('ServerStatus')->SweetAlert != 1){
-			echo "";
-		}
-        echo '<!-- ServerStatus Plugin Of Typecho -->';
-        echo "\n";
     }
     
     /**
@@ -219,18 +256,8 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
 			echo "<script src=\"https://pv.sohu.com/cityjson?ie=utf-8\"></script>\n";
 		}
 		if(!empty($options->plugin('ServerStatus')->UptimeKey)){
-			echo <<<EOF
-  <script type="text/javascript">
-  var WebsiteStatus = null;
-  // array of Monitor-specific API keys or Main API key to list all monitors
-  var __apiKeys = [
-	'{$options->plugin('ServerStatus')->UptimeKey}', //Auth E
-  ];
-  </script>
-EOF;
-            echo "\n";
 			echo "<script src=\"https://cdn.jsdelivr.net/npm/mustache@4.0.1/mustache.min.js\"></script>\n";
-			echo "<script src=\"https://cdn.jsdelivr.net/gh/acewfdy/static/System/typecho/plugin/ServerStatus/js/cup_bak.js\"></script>\n";
+			echo "<script src=\"https://cdn.jsdelivr.net/gh/acewfdy/static@latest/System/typecho/plugin/ServerStatus/js/cup.js\"></script>\n";
 		}
 		// 插入控制台标识
     	echo '<script>console.log("\n %c ServerStatus Plugin Of Typecho By Weifeng ","color:#fff; background: linear-gradient(to right , #7A88FF, #d27aff); padding:5px; border-radius: 10px;");console.log("\n %c 插件：https://wfblog.net/archives/serverstatus_plugin.html","color:#fff; background: linear-gradient(to right , #7A88FF, #d27aff); padding:5px; border-radius: 10px;"); </script>';
@@ -409,18 +436,14 @@ EOF;
 		if ($type) {
 			$sql = $sql->where('type=?', $type);
 		}
-		$sql = $sql->order($prefix.'ServerStatus_server.id', Typecho_Db::SORT_ASC);
+		$sql = $sql->order($prefix.'ServerStatus_server.order', Typecho_Db::SORT_ASC);
 		$num = intval($num);
 		if ($num > 0) {
 			$sql = $sql->limit($num);
 		}
 		$servers = $db->fetchAll($sql);
 		$str = "";
-        $color = array("bg-danger","bg-info","bg-warning");
-        $echoCount = 0;
         foreach ($servers as $server) {
-            $specialColor = $specialColor = $color[$echoCount %3];
-            $echoCount ++ ;
             if ($server['desc'] == ""){
                 $server['desc'] = "一个未知的服务器";
             }
@@ -434,8 +457,8 @@ EOF;
                 $server['type_cn'] = "未知";
             }
             $str .= str_replace(
-				array('{id}', '{name}', '{sign}', '{type}', '{type_cn}', '{desc}', '{color}'),
-				array($server['id'], $server['name'], $server['sign'], $server['type'], $server['type_cn'], $server['desc'], $specialColor),
+				array('{id}', '{name}', '{sign}', '{type}', '{type_cn}', '{desc}', '{order}'),
+				array($server['id'], $server['name'], $server['sign'], $server['type'], $server['type_cn'], $server['desc'], $server['order']),
 				$pattern
 			);
 		}
@@ -448,12 +471,21 @@ EOF;
 		echo ServerStatus_Plugin::output_str($pattern, $num, $type);
 	}
 
-    public static function info($id)
+    public static function info($id=null,$echo=null)
 	{
 		$db = Typecho_Db::get();
 		$prefix = $db->getPrefix();
-		$server = $db->fetchRow($db->select()->from($prefix.'ServerStatus_server')->where('id = ?', $id)->limit(1));
-		return json_encode($server,JSON_UNESCAPED_UNICODE);
+		if(empty($id)){
+			$server = $db->fetchRow($db->select()->from($prefix.'ServerStatus_server')->limit(1));
+		}else{
+			$server = $db->fetchRow($db->select()->from($prefix.'ServerStatus_server')->where('id = ?', $id)->limit(1));
+		}
+		if($echo == 'json'){
+			$data = json_encode($server,JSON_UNESCAPED_UNICODE);
+		}else{
+			$data = $server;
+		}
+		return $data;
 	}
 
     /**
@@ -485,5 +517,28 @@ EOF;
             return $text;
         }
     }
+
+    /**
+     * 获取服务器数量
+     */
+	public static function GetCount()
+	{
+		$db = Typecho_Db::get();
+		$prefix = $db->getPrefix();
+		$count = count($db->fetchRow($db->select()->from($prefix.'ServerStatus_server')));
+		return $count;
+	}
+
+    /**
+     * 获取设置内容
+     */
+	public static function GetConfig($key='UptimeKey')
+	{
+		$options = Typecho_Widget::widget('Widget_Options');
+		if (!isset($options->plugins['activated']['ServerStatus'])) {
+			return 'ServerStatus插件未激活';
+		}
+		return $options->plugin('ServerStatus')->$key;
+	}
 }
 ?>

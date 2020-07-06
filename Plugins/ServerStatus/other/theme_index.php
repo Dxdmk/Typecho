@@ -31,6 +31,7 @@ foreach ($servers as $server) {
         <div class="panel-heading"><?php echo $server['name'];?></div>
         <ul class="list-group">
           <li class="list-group-item">ID：<?php echo $server['id'];?></li>
+          <li class="list-group-item">排序：<?php echo $server['order'];?></li>
           <li class="list-group-item">类型：<?php echo $server['type_cn'];?></li>
           <li class="list-group-item">介绍：<br><?php echo $server['desc'];?></li>
         </ul>

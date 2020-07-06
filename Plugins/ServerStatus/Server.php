@@ -19,7 +19,7 @@ include 'menu.php';
                 <div class="col-mb-12 col-tb-8" role="main">                  
                     <?php
 						$prefix = $db->getPrefix();
-						$servers = $db->fetchAll($db->select()->from($prefix.'ServerStatus_server')->order($prefix.'ServerStatus_server.id', Typecho_Db::SORT_ASC));
+						$servers = $db->fetchAll($db->select()->from($prefix.'ServerStatus_server')->order($prefix.'ServerStatus_server.order', Typecho_Db::SORT_ASC));
                     ?>
                     <form method="post" name="manage_categories" class="operate-form">
                     <div class="typecho-list-operate clearfix">
