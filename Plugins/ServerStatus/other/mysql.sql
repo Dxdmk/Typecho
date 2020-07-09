@@ -7,6 +7,6 @@ CREATE TABLE `typecho_ServerStatus_server` (
   `key` varchar(255) NOT NULL DEFAULT '123456',
   `ajax` varchar(255) NOT NULL DEFAULT '10',
   `desc` text NULL,
-  `order` int(10) unsigned default '0',
+  `order` int(10) default '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=%charset%;
