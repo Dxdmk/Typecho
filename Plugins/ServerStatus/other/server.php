@@ -24,14 +24,14 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
      <div class="col center-part">
     <!--标题下的一排功能信息图标：作者/时间/浏览次数/评论数/分类-->
          <header class="bg-light lter b-b wrapper-md">
-             <h1 class="m-n font-thin h3"><i data-feather="server" class="i-sm m-r-sm"></i><?php if(empty($_GET['id'])){ ?>服务器列表<?php }else{ ?>服务器[<?php echo json_decode(ServerStatus_Plugin::info($_GET['id']),true)['name']; ?>]的状态<?php } ?></h1>
+             <h1 class="m-n font-thin h3"><i data-feather="server" class="i-sm m-r-sm"></i><?php if(empty($_GET['id'])){ ?>服务器列表<?php }else{ ?>服务器[<?php echo ServerStatus_Plugin::info($_GET['id'])['name']; ?>]的状态<?php } ?></h1>
              <small class="text-muted letterspacing indexWords"><?php echo $this->fields->intro; ?></small>
          </header>
       <div class="wrapper-md" id="post-panel">
 	   <!--开始-->
        <ol class="breadcrumb bg-white-pure" itemscope=""><li>
            <a href="<?php echo $this->options->rootUrl ?>" itemprop="breadcrumb" title="" data-toggle="tooltip" data-original-title="返回首页"><span class="home-icons"><svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></span>首页</a>
-             </li><li <?php if(!isset($_GET['id'])) { ?>class="avtive"<?php } ?>><a href="<?php echo $this->permalink(); ?>">服务器状态</a></li><?php if(isset($_GET['id'])) { ?><li class="active">服务器 [<?php echo json_decode(ServerStatus_Plugin::info($_GET['id']),true)['name']; ?>] 的状态&nbsp;&nbsp;</li><?php } ?>
+             </li><li <?php if(!isset($_GET['id'])) { ?>class="avtive"<?php } ?>><a href="<?php echo $this->permalink(); ?>">服务器状态</a></li><?php if(isset($_GET['id'])) { ?><li class="active">服务器 [<?php echo ServerStatus_Plugin::info($_GET['id'])['name']; ?>] 的状态&nbsp;&nbsp;</li><?php } ?>
 	   </ol>
        <!--结束-->
        <!--博客文章样式 begin with .blog-post-->
@@ -44,7 +44,7 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
             <div class="entry-content l-h-2x">
               <?php echo Content::postContent($this,$this->user->hasLogin()); ?>
             </div>
-<?php if(empty($_GET['id'])){ ?>
+<?php if(empty($_GET['id']) && ServerStatus_Plugin::GetCount() > 1){ ?>
                 <div class="row">
 				    <?php
 					ServerStatus_Plugin::output('<div class="list-group" style="text-align:center;padding:10px">
@@ -53,6 +53,7 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
     <tbody>
       <tr><td style="width:70px;"><b>名称</b></td><td style="width:auto;">{name}</td></tr>
       <tr><td style="width:70px;"><b>ID</b></td><td style="width:auto;">{id}</td></tr>
+      <tr><td style="width:70px;"><b>排序</b></td><td style="width:auto;">{order}</td></tr>
       <tr><td style="width:70px;"><b>类型</b></td><td style="width:auto;">{type_cn}</td></tr>
       <tr><td style="width:70px;"><b>介绍</b></td><td style="width:auto;">{desc}</td></tr>
     </tbody>
@@ -66,6 +67,7 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 				</div>
 <?php
 }else{
+	if(empty($_GET['id'])) $_GET['id'] = ServerStatus_Plugin::info()['id'];
 ?>
               <div class="">
 	            <div class="">
@@ -183,7 +185,7 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
     				if(data != null ){
     					swal.close();
 						StatusLoader();
-    					Loading = setInterval(StatusLoader,<?php echo json_decode(ServerStatus_Plugin::info($_GET['id']),true)['ajax']; ?>*1000);
+    					Loading = setInterval(StatusLoader,<?php echo ServerStatus_Plugin::info($_GET['id'])['ajax']; ?>*1000);
     				}else{
     					swal.close();
     					Swal.fire({allowOutsideClick:false,icon:'error',type:'error',title:"通讯失败，请重试！",showConfirmButton:true,timer:0});

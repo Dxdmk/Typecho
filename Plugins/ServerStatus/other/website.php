@@ -112,10 +112,20 @@ $options = Typecho_Widget::widget('Widget_Options');
   <script type="text/javascript">
   // array of Monitor-specific API keys or Main API key to list all monitors
   var __apiKeys = [
-	'<?php echo $options->plugin('ServerStatus')->UptimeKey; ?>', //Auth E
+<?php
+$data = ServerStatus_Plugin::GetConfig('UptimeKey');
+$data = explode(',',$data);
+foreach($data as $value){
+	if($value == end($data)){
+		echo  '    \''.$value.'\'';
+	}else{
+		echo '    \''.$value.'\','.PHP_EOL;
+	}
+}
+?>
   ];
   </script>
-  <script src="https://cdn.jsdelivr.net/gh/acewfdy/static/System/typecho/plugin/ServerStatus/js/cup_bak.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/gh/acewfdy/static/System/typecho/plugin/ServerStatus/js/cup.js" type="text/javascript"></script>
   <script type="text/javascript">
     jQuery(document).ready(WebsiteStatus.dashboard.init);
   </script>
