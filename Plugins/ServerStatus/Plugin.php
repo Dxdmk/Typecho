@@ -4,8 +4,8 @@
  * 
  * @package ServerStatus
  * @author <strong style="color:#B0E2FF;font-family: 楷体;">Weifeng</strong>
- * @version <strong style="color:#B0E2FF;font-family: 楷体;">2.0.0</strong>
- * @update: 2020-05-23
+ * @version <strong style="color:#B0E2FF;font-family: 楷体;">2.1.0</strong>
+ * @update: 2020-07-31
  * @link https://wfblog.net/
  */
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
@@ -105,11 +105,6 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
 					</ul>
 				</div>';
 		echo "<h2>感谢使用ServerStatus插件，本插件由<a href='https://wfblog.net/'>Weifeng</a>编写</h2>";
-		$Toastr = new Typecho_Widget_Helper_Form_Element_Radio(
-			'Toastr', array(
-				'0' => '未引入',
-				'1' => '已引入',
-			), '0', 'Toastr', '是否已经引入Toastr组件，如果已经引入，请选择后者，不然会报错哦~');
 		$SweetAlert = new Typecho_Widget_Helper_Form_Element_Radio(
 			'SweetAlert', array(
 				'0' => '未引入',
@@ -130,7 +125,6 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
 				'false' => '否',
 			), 'true', 'UptimeRobot Link', '是否展示监控网站的链接');
 		$UptimeDay = new Typecho_Widget_Helper_Form_Element_Text('UptimeDay', NULL, '60', 'UptimeRobot Day', '日志天数。可选范围1~90，默认60天');
-		$form->addInput($Toastr);
 		$form->addInput($SweetAlert);
 		$form->addInput($IPApi);
 		$form->addInput($UptimeKey);
@@ -189,8 +183,8 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
 						}
 						foreach ($dbrows as $dbrow) {
 							if ($dbrow) {
-								unlink($dbrow['id']);
-								unlink($dbrow['order']);
+								unset($dbrow['id']);
+								unset($dbrow['order']);
 								$dbrow['order'] = $db->fetchObject($db->select(array('MAX(order)' => 'maxOrder'))->from($prefix.'ServerStatus_server'))->maxOrder + 1;
 								$db->query($db->insert($prefix.'ServerStatus_server')->rows($dbrow));
 							}
@@ -218,13 +212,10 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
 	public static function header()
 	{
 		$options = Typecho_Widget::widget('Widget_Options');
-		if($options->plugin('ServerStatus')->Toastr != 1 || $options->plugin('ServerStatus')->SweetAlert != 1){
+		if(!empty($options->plugin('ServerStatus')->UptimeKey) || $options->plugin('ServerStatus')->SweetAlert != 1){
 			echo "\n";
 			echo '<!-- ServerStatus Plugin Of Typecho -->';
 			echo "\n";
-			if($options->plugin('ServerStatus')->Toastr != 1){
-				echo "<link href=\"https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css\" rel=\"stylesheet\">\n";
-			}
 			if($options->plugin('ServerStatus')->SweetAlert != 1){
 				echo "";
 			}
@@ -266,9 +257,6 @@ EOF;
 		echo "\n";
 		echo '<!-- ServerStatus Plugin Of Typecho -->';
 		echo "\n";
-		if($options->plugin('ServerStatus')->Toastr != 1){
-			echo "<script src=\"https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js\"></script>\n";
-		}
 		if($options->plugin('ServerStatus')->SweetAlert != 1){
 			echo "<script src=\"https://cdn.jsdelivr.net/npm/sweetalert2@8\"></script>\n";
 		}

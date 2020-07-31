@@ -2,9 +2,9 @@
 /**
  * 网站状态
  *
- * @version:1.1.0
+ * @version:2.1.0
  * @author Weifeng
- * https://github.com/acewfdy/Handsome
+ * https://github.com/acewfdy/Typecho
  * @package custom
  */
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
