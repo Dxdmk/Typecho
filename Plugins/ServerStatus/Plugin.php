@@ -69,11 +69,15 @@ class ServerStatus_Plugin implements Typecho_Plugin_Interface
 		$otherDir = __TYPECHO_ROOT_DIR__ . __TYPECHO_PLUGIN_DIR__ . '/ServerStatus/other';
 		$themeDir = __TYPECHO_ROOT_DIR__ . __TYPECHO_THEME_DIR__;
 		if(is_dir($themeDir.'/handsome')){
-			if(!unlink($themeDir.'/handsome/server.php')){
-				throw new Typecho_Plugin_Exception('插件权限不足，请给予足够的权限！');
+			if(file_exists($themeDir.'/handsome/server.php')){
+				if(!unlink($themeDir.'/handsome/server.php')){
+					throw new Typecho_Plugin_Exception('插件权限不足，请给予足够的权限！');
+				}
 			}
-			if(!unlink($themeDir.'/handsome/website.php')){
-				throw new Typecho_Plugin_Exception('插件权限不足，请给予足够的权限！');
+			if(file_exists($themeDir.'/handsome/website.php')){
+				if(!unlink($themeDir.'/handsome/website.php')){
+					throw new Typecho_Plugin_Exception('插件权限不足，请给予足够的权限！');
+				}
 			}
 		}
 		Helper::removeRoute("ServerStatus_Check");
