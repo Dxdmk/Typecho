@@ -44,7 +44,7 @@ $options = Typecho_Widget::widget('Widget_Options');
              <div id="stattip-load" class="alert alert-info" role="alert">
                <b>当前状态：</b>正在检测状态，请稍候...
              </div>
-             <div>
+             <div class="table-responsive box-shadow-wrap-lg">
                <table>
                  <thead>
                    <tr id="server-title">

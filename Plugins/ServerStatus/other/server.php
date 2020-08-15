@@ -47,7 +47,7 @@ if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 <?php if(empty($_GET['id']) && ServerStatus_Plugin::GetCount() > 1){ ?>
                 <div class="row">
 				    <?php
-					ServerStatus_Plugin::output('<div class="list-group" style="text-align:center;padding:10px">
+					ServerStatus_Plugin::output('<div class="table-responsive box-shadow-wrap-lg" style="text-align:center;">
   <table style="border-radius:10px!important;overflow:hidden!important;border-collapse:separate;">
     <thead></thead>
     <tbody>
